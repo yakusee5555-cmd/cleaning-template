@@ -4,7 +4,7 @@ import {
   BED_BASE, CLEAN_TYPES, FREQUENCIES, estimate,
 } from "./data";
 import { IMG } from "./images";
-import { Reveal, Counter } from "./components";
+import { Reveal, Counter, SprayBottle, Squeegee } from "./components";
 
 /* ---------- word-by-word animated headline ---------- */
 function Words({ text, base = 0 }: { text: string; base?: number }) {
@@ -446,6 +446,112 @@ export function BookCta() {
               <p className="mt-3 text-center text-xs text-muted">No payment due today · Free rescheduling up to 24h before</p>
             </form>
           )}
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ================= BEFORE / AFTER ================= */
+function useScrollSway() {
+  const [rot, setRot] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const on = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setRot(Math.sin(window.scrollY / 220) * 16));
+    };
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", on);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+  return rot;
+}
+
+export function BeforeAfter() {
+  const [pos, setPos] = useState(50);
+  const dragging = useRef(false);
+  const box = useRef<HTMLDivElement>(null);
+  const sway = useScrollSway();
+
+  const move = (clientX: number) => {
+    const el = box.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setPos(Math.min(94, Math.max(6, ((clientX - r.left) / r.width) * 100)));
+  };
+
+  return (
+    <section className="overflow-hidden py-20 md:py-28">
+      <div className="mx-auto max-w-6xl px-5">
+        <Reveal className="mx-auto max-w-2xl text-center">
+          <p className="text-xs font-bold tracking-[0.3em] text-leaf uppercase">Proof, not promises</p>
+          <h2 className="mt-3 font-display text-4xl uppercase sm:text-6xl">
+            Drag to see the <Highlight delay={400}>difference.</Highlight>
+          </h2>
+          <p className="mt-4 text-muted">One visit. Same kitchen. This is what a Spotless deep clean does.</p>
+        </Reveal>
+
+        <Reveal delay={1} className="relative mx-auto mt-12 max-w-4xl">
+          {/* spray bottle — sways left/right as you scroll */}
+          <div
+            className="pointer-events-none absolute -top-10 right-2 z-20 w-20 sm:-top-14 sm:right-8 sm:w-28"
+            style={{ transform: `rotate(${sway}deg)`, transformOrigin: "50% 20%" }}
+            aria-hidden
+          >
+            <SprayBottle className="w-full drop-shadow-[0_16px_20px_rgba(22,36,29,0.3)]" />
+          </div>
+          {/* wiper resting by the slider */}
+          <div className="floaty pointer-events-none absolute -bottom-8 left-2 z-20 w-36 sm:-bottom-10 sm:left-10 sm:w-48" aria-hidden>
+            <Squeegee className="w-full drop-shadow-[0_16px_20px_rgba(22,36,29,0.3)]" />
+          </div>
+
+          <div
+            ref={box}
+            className="relative aspect-[16/11] cursor-ew-resize touch-none overflow-hidden rounded-[2rem] shadow-2xl select-none sm:aspect-[16/9]"
+            onPointerDown={(e) => {
+              dragging.current = true;
+              (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+              move(e.clientX);
+            }}
+            onPointerMove={(e) => dragging.current && move(e.clientX)}
+            onPointerUp={() => (dragging.current = false)}
+            onPointerCancel={() => (dragging.current = false)}
+          >
+            {/* AFTER (clean) — base layer */}
+            <img src={IMG.kitchen} alt="Kitchen after Spotless deep clean" className="absolute inset-0 h-full w-full object-cover" draggable={false} />
+            {/* BEFORE (dirty) — clipped to the left of the handle */}
+            <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
+              <img
+                src={IMG.kitchen}
+                alt="Kitchen before cleaning"
+                draggable={false}
+                className="h-full w-full object-cover"
+                style={{ filter: "sepia(0.5) brightness(0.58) saturate(0.5) contrast(0.94)" }}
+              />
+              <div
+                className="absolute inset-0 opacity-70"
+                style={{ background: "radial-gradient(ellipse 32% 26% at 22% 68%, rgba(58,44,20,0.6), transparent), radial-gradient(ellipse 26% 22% at 74% 28%, rgba(58,44,20,0.55), transparent), radial-gradient(ellipse 20% 16% at 56% 88%, rgba(48,36,16,0.55), transparent), radial-gradient(ellipse 18% 14% at 88% 78%, rgba(58,44,20,0.5), transparent)" }}
+              />
+            </div>
+
+            {/* tags */}
+            <span className="absolute top-4 left-4 rounded-full bg-ink/85 px-4 py-1.5 font-display text-xs tracking-[0.2em] text-cream uppercase">Before</span>
+            <span className="absolute top-4 right-4 rounded-full bg-sun px-4 py-1.5 font-display text-xs tracking-[0.2em] text-ink uppercase">After</span>
+
+            {/* handle */}
+            <div className="absolute inset-y-0" style={{ left: `${pos}%` }}>
+              <div className="absolute inset-y-0 w-1 -translate-x-1/2 bg-cream shadow-[0_0_12px_rgba(0,0,0,0.4)]" />
+              <div className="absolute top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-sun bg-ink font-display text-lg text-cream shadow-xl">
+                ↔
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-5 text-center text-sm text-muted">Illustrative demo — drag the handle left and right.</p>
         </Reveal>
       </div>
     </section>

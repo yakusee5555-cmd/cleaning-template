@@ -1,4 +1,4 @@
-import { Hero, Marquee, Stats, Calculator, ServicesGrid, HowItWorks, Reviews, ServiceAreas, Faq, BookCta } from "../sections";
+import { Hero, Marquee, Stats, BeforeAfter, Calculator, ServicesGrid, HowItWorks, Reviews, ServiceAreas, Faq, BookCta } from "../sections";
 
 export default function Home() {
   return (
@@ -6,6 +6,7 @@ export default function Home() {
       <Hero />
       <Marquee />
       <Stats />
+      <BeforeAfter />
       <Calculator />
       <ServicesGrid />
       <HowItWorks />

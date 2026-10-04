@@ -181,3 +181,149 @@ export function ScrollToTop() {
   }, []);
   return null;
 }
+
+/* ---------- spray bottle graphic ---------- */
+export function SprayBottle({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 120 210" className={className} aria-hidden>
+      {/* mist */}
+      <g fill="#9fd8ff" opacity="0.85">
+        <circle cx="112" cy="36" r="3.5" />
+        <circle cx="104" cy="26" r="2.5" />
+        <circle cx="116" cy="50" r="2.5" />
+        <circle cx="96" cy="38" r="2" />
+      </g>
+      {/* sprayer head */}
+      <rect x="38" y="40" width="58" height="26" rx="9" fill="#16241D" />
+      <rect x="90" y="47" width="16" height="11" rx="4" fill="#16241D" />
+      <rect x="44" y="47" width="10" height="12" rx="3" fill="#FFC82E" />
+      {/* trigger */}
+      <path d="M50 66 q-8 16 -4 32" stroke="#16241D" strokeWidth="9" fill="none" strokeLinecap="round" />
+      {/* neck */}
+      <rect x="54" y="66" width="16" height="18" fill="#16241D" />
+      {/* bottle body */}
+      <rect x="30" y="84" width="64" height="118" rx="16" fill="#FFC82E" />
+      <rect x="30" y="84" width="64" height="118" rx="16" fill="url(#bottlegloss)" />
+      {/* label */}
+      <rect x="40" y="112" width="44" height="56" rx="8" fill="#FBF7EF" />
+      <text x="62" y="142" textAnchor="middle" fontFamily="Arial Black, sans-serif" fontSize="26" fontWeight="900" fill="#16241D">S</text>
+      <text x="62" y="158" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="8" fontWeight="700" letterSpacing="1.5" fill="#16241D">SPOTLESS</text>
+      <defs>
+        <linearGradient id="bottlegloss" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.35" />
+          <stop offset="0.25" stopColor="#fff" stopOpacity="0" />
+          <stop offset="1" stopColor="#16241D" stopOpacity="0.12" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+/* ---------- handheld squeegee graphic ---------- */
+export function Squeegee({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 170 84" className={className} aria-hidden>
+      <rect x="8" y="30" width="72" height="17" rx="8.5" fill="#16241D" />
+      <rect x="72" y="22" width="88" height="34" rx="8" fill="#FFC82E" />
+      <rect x="72" y="48" width="88" height="9" rx="4.5" fill="#16241D" />
+      <rect x="72" y="22" width="88" height="34" rx="8" fill="#fff" opacity="0.18" />
+    </svg>
+  );
+}
+
+/* ---------- tall wiper blade for the loader ---------- */
+function LoaderWiper() {
+  return (
+    <svg viewBox="0 0 90 620" className="h-[105vh] w-auto drop-shadow-[0_10px_25px_rgba(22,36,29,0.35)]" aria-hidden>
+      {/* handle */}
+      <rect x="37" y="6" width="16" height="130" rx="8" fill="#16241D" />
+      <rect x="37" y="6" width="16" height="130" rx="8" fill="#fff" opacity="0.12" />
+      {/* blade channel */}
+      <rect x="18" y="136" width="54" height="470" rx="10" fill="#FFC82E" />
+      <rect x="18" y="136" width="54" height="470" rx="10" fill="#fff" opacity="0.2" />
+      {/* rubber edge (leading) */}
+      <rect x="18" y="136" width="10" height="470" rx="5" fill="#16241D" />
+      {/* water droplets flung off */}
+      <g fill="#9fd8ff" opacity="0.9">
+        <circle cx="8" cy="220" r="5" />
+        <circle cx="4" cy="330" r="3.5" />
+        <circle cx="9" cy="450" r="4.5" />
+        <circle cx="5" cy="540" r="3" />
+      </g>
+    </svg>
+  );
+}
+
+/* ---------- loading screen: wiper cleans the screen ---------- */
+export function Loader({ onDone }: { onDone: () => void }) {
+  const [progress, setProgress] = useState(0);
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      onDone();
+      return;
+    }
+    document.body.style.overflow = "hidden";
+    const t0 = performance.now();
+    const dur = 2000;
+    let raf = 0;
+    const tick = (t: number) => {
+      const raw = Math.min(1, (t - t0) / dur);
+      // easeInOut: steady wipe
+      const p = raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2;
+      setProgress(p);
+      if (raw < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        setFading(true);
+        setTimeout(() => {
+          document.body.style.overflow = "";
+          onDone();
+        }, 450);
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      document.body.style.overflow = "";
+    };
+  }, [onDone]);
+
+  const pct = progress * 100;
+
+  return (
+    <div
+      className={`fixed inset-0 z-[100] transition-opacity duration-500 ${fading ? "pointer-events-none opacity-0" : ""}`}
+      aria-hidden
+    >
+      {/* dirty fog layer — gets wiped away left → right */}
+      <div
+        className="absolute inset-0 bg-[#ddd6c2]/95 backdrop-blur-[7px]"
+        style={{ clipPath: `inset(0 0 0 ${pct}%)` }}
+      >
+        {/* grime smudges */}
+        <div className="absolute inset-0 opacity-70" style={{ background: "radial-gradient(ellipse 35% 28% at 18% 22%, rgba(90,75,50,0.35), transparent), radial-gradient(ellipse 30% 24% at 78% 66%, rgba(90,75,50,0.32), transparent), radial-gradient(ellipse 22% 18% at 55% 88%, rgba(90,75,50,0.3), transparent), radial-gradient(ellipse 26% 20% at 88% 18%, rgba(90,75,50,0.28), transparent)" }} />
+        {/* brand mark, wiped off with the grime */}
+        <div className="absolute inset-0 grid place-items-center">
+          <div className="text-center">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-sun font-display text-3xl text-ink shadow-lg">S</div>
+            <div className="mt-3 font-display text-2xl tracking-wide text-ink uppercase">Spotless</div>
+            <div className="mt-1 text-xs font-semibold tracking-[0.3em] text-ink/50 uppercase">wiping…</div>
+          </div>
+        </div>
+      </div>
+
+      {/* gleam trail just behind the wiper */}
+      <div
+        className="absolute inset-y-0 w-24 bg-gradient-to-r from-transparent via-white/50 to-transparent"
+        style={{ left: `calc(${pct}% - 7rem)` }}
+      />
+
+      {/* the wiper itself */}
+      <div className="absolute inset-y-0" style={{ left: `calc(${pct}% - 45px)` }}>
+        <LoaderWiper />
+      </div>
+    </div>
+  );
+}
