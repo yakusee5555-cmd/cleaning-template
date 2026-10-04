@@ -327,3 +327,64 @@ export function Loader({ onDone }: { onDone: () => void }) {
     </div>
   );
 }
+
+/* ---------- animated circular stat ring (hero badge) ---------- */
+export function StatRing({ value = 98, label = "would rebook" }: { value?: number; label?: string }) {
+  const [p, setP] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setP(value);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (es) => {
+        if (!es[0].isIntersecting) return;
+        io.disconnect();
+        const t0 = performance.now();
+        const dur = 1500;
+        const tick = (t: number) => {
+          const r = Math.min(1, (t - t0) / dur);
+          // easeOutBack — overshoots like a spring
+          const c1 = 1.70158;
+          const c3 = c1 + 1;
+          const e = 1 + c3 * Math.pow(r - 1, 3) + c1 * Math.pow(r - 1, 2);
+          setP(e * value);
+          if (r < 1) requestAnimationFrame(tick);
+          else setP(value);
+        };
+        requestAnimationFrame(tick);
+      },
+      { threshold: 0.4 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [value]);
+
+  const R = 52;
+  const C = 2 * Math.PI * R;
+  const shown = Math.max(0, Math.min(value * 1.02, p));
+
+  return (
+    <div ref={ref} className="relative h-32 w-32 sm:h-36 sm:w-36">
+      <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90 drop-shadow-[0_14px_24px_rgba(22,36,29,0.4)]">
+        <circle cx="60" cy="60" r="58" fill="#16241D" />
+        <circle cx="60" cy="60" r={R} fill="none" stroke="#FBF7EF" strokeOpacity="0.14" strokeWidth="10" />
+        <circle
+          cx="60" cy="60" r={R} fill="none" stroke="#FFC82E" strokeWidth="10" strokeLinecap="round"
+          strokeDasharray={C}
+          strokeDashoffset={C - (C * shown) / 100}
+        />
+      </svg>
+      <div className="absolute inset-0 grid place-items-center text-center">
+        <div>
+          <div className="font-display text-3xl text-sun sm:text-4xl">{Math.round(shown)}%</div>
+          <div className="px-5 text-[9px] leading-tight font-bold tracking-[0.16em] text-cream/70 uppercase">{label}</div>
+        </div>
+      </div>
+    </div>
+  );
+}

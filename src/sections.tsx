@@ -4,7 +4,7 @@ import {
   BED_BASE, CLEAN_TYPES, FREQUENCIES, estimate,
 } from "./data";
 import { IMG } from "./images";
-import { Reveal, Counter, SprayBottle, Squeegee } from "./components";
+import { Reveal, Counter, SprayBottle, Squeegee, StatRing } from "./components";
 
 /* ---------- word-by-word animated headline ---------- */
 function Words({ text, base = 0 }: { text: string; base?: number }) {
@@ -52,10 +52,10 @@ export function Hero() {
             See your exact price below — <strong className="text-ink">then pick a time.</strong>
           </p>
           <div className="hero-in hero-in-4 mt-8 flex flex-wrap gap-3">
-            <a href="#pricing" className="rounded-full bg-sun px-8 py-4 font-display text-base tracking-wider text-ink uppercase shadow-[0_14px_30px_-10px_rgba(245,180,0,0.6)] transition hover:-translate-y-1">
+            <a href="#pricing" className="press rounded-full bg-sun px-8 py-4 font-display text-base tracking-wider text-ink uppercase shadow-[0_14px_30px_-10px_rgba(245,180,0,0.6)]">
               Get my price
             </a>
-            <a href={BUSINESS.phoneHref} className="rounded-full border-2 border-ink px-8 py-4 font-display text-base tracking-wider text-ink uppercase transition hover:-translate-y-1 hover:bg-ink hover:text-cream">
+            <a href={BUSINESS.phoneHref} className="press rounded-full border-2 border-ink px-8 py-4 font-display text-base tracking-wider text-ink uppercase hover:bg-ink hover:text-cream">
               {BUSINESS.phone}
             </a>
           </div>
@@ -69,11 +69,14 @@ export function Hero() {
           <div className="overflow-hidden rounded-[2rem] shadow-2xl">
             <img src={IMG.hero} alt="Professional cleaner at work in a bright living room" className="aspect-[4/5] w-full object-cover sm:aspect-square" />
           </div>
-          <div className="floaty absolute -left-4 top-8 rounded-2xl bg-ink px-5 py-4 text-cream shadow-xl sm:-left-8">
+          <div className="spring-in absolute -bottom-8 -left-4 sm:-left-8 [animation-delay:1s]">
+            <StatRing value={98} label="would rebook" />
+          </div>
+          <div className="spring-in absolute -left-4 top-8 rounded-2xl bg-ink px-5 py-4 text-cream shadow-xl sm:-left-8 [animation-delay:0.9s]">
             <div className="font-display text-3xl text-sun">$165</div>
             <div className="text-xs tracking-wide uppercase opacity-75">avg. 3-bed clean</div>
           </div>
-          <div className="floaty absolute -right-3 bottom-10 rounded-2xl bg-white px-5 py-4 shadow-xl [animation-delay:1.2s] sm:-right-6">
+          <div className="spring-in absolute -right-3 bottom-10 rounded-2xl bg-white px-5 py-4 shadow-xl sm:-right-6 [animation-delay:1.15s]">
             <div className="text-sm font-bold">✓ Bonded & insured</div>
             <div className="text-xs text-muted">Every cleaner, every visit</div>
           </div>
@@ -208,6 +211,23 @@ export function Calculator() {
                 ${low}–${high}
               </div>
               <p className="mt-2 text-sm text-cream/70">per visit · final price confirmed before we start</p>
+              <div className="mt-6 grid grid-cols-3 gap-2">
+                {CLEAN_TYPES.map((t) => {
+                  const e = estimate(bed, baths, t.id, freq);
+                  const active = t.id === type;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => change(() => setType(t.id))}
+                      className={`press rounded-2xl px-2 py-3 text-center transition ${active ? "bg-sun text-ink" : "bg-cream/10 text-cream hover:bg-cream/20"}`}
+                    >
+                      <div className={`text-[10px] font-bold tracking-wider uppercase ${active ? "text-ink/70" : "text-cream/60"}`}>{t.label}</div>
+                      <div key={tick} className="price-pop font-display text-2xl">${e.low}</div>
+                      <div className={`text-[10px] ${active ? "text-ink/70" : "text-cream/50"}`}>from</div>
+                    </button>
+                  );
+                })}
+              </div>
               <ul className="mt-6 space-y-2.5 text-sm text-cream/85">
                 {["All supplies & equipment included", "Bonded, insured cleaners", "24-hour happiness guarantee", "Free rescheduling up to 24h before"].map((li) => (
                   <li key={li} className="flex gap-2.5"><span className="text-sun">✓</span>{li}</li>
