@@ -233,19 +233,21 @@ export function Squeegee({ className = "" }: { className?: string }) {
 
 
 /* ---------- small handheld squeegee (vertical, like the reference) ---------- */
-function MiniSqueegee({ flip = false }: { flip?: boolean }) {
+function MiniSqueegee({ flip = false, height = 112 }: { flip?: boolean; height?: number }) {
+  const bladeH = Math.max(48, height - 58);
+  const H = 58 + bladeH;
   return (
     <svg
-      viewBox="0 0 64 150"
-      className="h-28 w-auto drop-shadow-[0_10px_20px_rgba(22,36,29,0.35)]"
-      style={{ transform: `scaleX(${flip ? -1 : 1})`, transition: "transform 0.25s" }}
+      viewBox={`0 0 64 ${H}`}
+      className="w-auto drop-shadow-[0_10px_20px_rgba(22,36,29,0.35)]"
+      style={{ height, transform: `scaleX(${flip ? -1 : 1})`, transition: "transform 0.25s, height 0.3s" }}
       aria-hidden
     >
       <rect x="22" y="4" width="20" height="46" rx="10" fill="#16241D" />
       <rect x="22" y="4" width="20" height="46" rx="10" fill="#fff" opacity="0.12" />
-      <rect x="14" y="50" width="36" height="92" rx="9" fill="#FFC82E" />
-      <rect x="14" y="50" width="36" height="92" rx="9" fill="#fff" opacity="0.18" />
-      <rect x="14" y="50" width="9" height="92" rx="4.5" fill="#16241D" />
+      <rect x="14" y="50" width="36" height={bladeH} rx="9" fill="#FFC82E" />
+      <rect x="14" y="50" width="36" height={bladeH} rx="9" fill="#fff" opacity="0.18" />
+      <rect x="14" y="50" width="9" height={bladeH} rx="4.5" fill="#16241D" />
     </svg>
   );
 }
@@ -287,16 +289,16 @@ export function Loader({ onDone }: { onDone: () => void }) {
     };
   }, [onDone]);
 
-  // wiper path: L→R (top 30%) → down → R→L (middle 30%) → down → L→R (bottom 40%)
+  // wiper path: L→R (top third) → down → R→L (middle third) → down → L→R (bottom third)
   const segs: Array<[number, number, number, number, number, number]> = [
-    [0.0, 0.3, 0.03, 0.15, 0.97, 0.15],
-    [0.3, 0.36, 0.97, 0.15, 0.97, 0.45],
-    [0.36, 0.62, 0.97, 0.45, 0.03, 0.45],
-    [0.62, 0.68, 0.03, 0.45, 0.03, 0.8],
-    [0.68, 1.0, 0.03, 0.8, 0.97, 0.8],
+    [0.0, 0.3, 0.03, 1 / 6, 0.97, 1 / 6],
+    [0.3, 0.36, 0.97, 1 / 6, 0.97, 0.5],
+    [0.36, 0.62, 0.97, 0.5, 0.03, 0.5],
+    [0.62, 0.68, 0.03, 0.5, 0.03, 5 / 6],
+    [0.68, 1.0, 0.03, 5 / 6, 0.97, 5 / 6],
   ];
   let wx = 0.03;
-  let wy = 0.15;
+  let wy = 1 / 6;
   let dir = 1;
   for (const [a, b, x0, y0, x1, y1] of segs) {
     if (p <= b) {
@@ -311,23 +313,23 @@ export function Loader({ onDone }: { onDone: () => void }) {
   const q1 = Math.min(1, p / 0.3);
   const q2 = Math.min(1, Math.max(0, (p - 0.36) / 0.26));
   const q3 = Math.min(1, Math.max(0, (p - 0.68) / 0.32));
-  const fog = "bg-[#ddd6c2]/95 backdrop-blur-[7px]";
+  const fog = "bg-[#ddd6c2]/95 backdrop-blur-[4px]";
 
   return (
     <div
       className={`fixed inset-0 z-[100] transition-opacity duration-500 ${fading ? "pointer-events-none opacity-0" : ""}`}
       aria-hidden
     >
-      {/* band 1: top 30% — wiped left → right */}
-      <div className={`absolute inset-x-0 top-0 h-[30%] ${fog}`} style={{ clipPath: `inset(0 0 0 ${q1 * 100}%)` }}>
+      {/* band 1: top third — wiped left → right */}
+      <div className={`absolute inset-x-0 top-0 h-[33.333%] ${fog}`} style={{ clipPath: `inset(0 0 0 ${q1 * 100}%)` }}>
         <div className="absolute inset-0 opacity-70" style={{ background: GRIME }} />
       </div>
-      {/* band 2: middle 30% — wiped right → left */}
-      <div className={`absolute inset-x-0 top-[30%] h-[30%] ${fog}`} style={{ clipPath: `inset(0 ${q2 * 100}% 0 0)` }}>
+      {/* band 2: middle third — wiped right → left */}
+      <div className={`absolute inset-x-0 top-[33.333%] h-[33.333%] ${fog}`} style={{ clipPath: `inset(0 ${q2 * 100}% 0 0)` }}>
         <div className="absolute inset-0 opacity-70" style={{ background: GRIME }} />
       </div>
-      {/* band 3: bottom 40% — wiped left → right */}
-      <div className={`absolute inset-x-0 top-[60%] h-[40%] ${fog}`} style={{ clipPath: `inset(0 0 0 ${q3 * 100}%)` }}>
+      {/* band 3: bottom third — wiped left → right */}
+      <div className={`absolute inset-x-0 top-[66.666%] h-[33.334%] ${fog}`} style={{ clipPath: `inset(0 0 0 ${q3 * 100}%)` }}>
         <div className="absolute inset-0 opacity-70" style={{ background: GRIME }} />
       </div>
 
@@ -340,9 +342,12 @@ export function Loader({ onDone }: { onDone: () => void }) {
         </div>
       </div>
 
-      {/* the little wiper */}
+      {/* the little wiper — sized to the third it's cleaning */}
       <div className="absolute" style={{ left: `${wx * 100}%`, top: `${wy * 100}%`, transform: "translate(-50%, -50%)" }}>
-        <MiniSqueegee flip={dir < 0} />
+        <MiniSqueegee
+          flip={dir < 0}
+          height={typeof window !== "undefined" ? window.innerHeight / 3 : 240}
+        />
       </div>
     </div>
   );
