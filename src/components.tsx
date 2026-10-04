@@ -233,21 +233,54 @@ export function Squeegee({ className = "" }: { className?: string }) {
 
 
 /* ---------- small handheld squeegee (vertical, like the reference) ---------- */
-function MiniSqueegee({ flip = false, height = 112 }: { flip?: boolean; height?: number }) {
+/* ---------- small 3D handheld squeegee (vertical, like the reference) ---------- */
+function MiniSqueegee({ tilt = 0, height = 112 }: { tilt?: number; height?: number }) {
   const bladeH = Math.max(48, height - 58);
   const H = 58 + bladeH;
   return (
     <svg
       viewBox={`0 0 64 ${H}`}
-      className="w-auto drop-shadow-[0_10px_20px_rgba(22,36,29,0.35)]"
-      style={{ height, transform: `scaleX(${flip ? -1 : 1})`, transition: "transform 0.25s, height 0.3s" }}
+      className="w-auto drop-shadow-[0_14px_22px_rgba(22,36,29,0.4)]"
+      style={{
+        height,
+        transform: `rotate(${tilt}deg)`,
+        transformBox: "fill-box",
+        transformOrigin: "center",
+        transition: "transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1), height 0.3s",
+      }}
       aria-hidden
     >
-      <rect x="22" y="4" width="20" height="46" rx="10" fill="#16241D" />
-      <rect x="22" y="4" width="20" height="46" rx="10" fill="#fff" opacity="0.12" />
-      <rect x="14" y="50" width="36" height={bladeH} rx="9" fill="#FFC82E" />
-      <rect x="14" y="50" width="36" height={bladeH} rx="9" fill="#fff" opacity="0.18" />
-      <rect x="14" y="50" width="9" height={bladeH} rx="4.5" fill="#16241D" />
+      <defs>
+        <linearGradient id="sqBlade" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#8a6a00" />
+          <stop offset="0.16" stopColor="#FFC82E" />
+          <stop offset="0.42" stopColor="#FFE89A" />
+          <stop offset="0.62" stopColor="#FFC82E" />
+          <stop offset="1" stopColor="#b88900" />
+        </linearGradient>
+        <linearGradient id="sqHandle" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#0a100d" />
+          <stop offset="0.38" stopColor="#33463c" />
+          <stop offset="0.52" stopColor="#4a6355" />
+          <stop offset="0.68" stopColor="#223129" />
+          <stop offset="1" stopColor="#0a100d" />
+        </linearGradient>
+        <linearGradient id="sqRubber" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#050807" />
+          <stop offset="0.5" stopColor="#2e3b35" />
+          <stop offset="1" stopColor="#050807" />
+        </linearGradient>
+      </defs>
+      {/* handle */}
+      <rect x="22" y="4" width="20" height="46" rx="10" fill="url(#sqHandle)" />
+      <ellipse cx="32" cy="50" rx="10" ry="3.5" fill="#0a100d" opacity="0.55" />
+      {/* blade channel */}
+      <rect x="14" y="50" width="36" height={bladeH} rx="9" fill="url(#sqBlade)" />
+      {/* rubber edge */}
+      <rect x="15.5" y="54" width="9" height={bladeH - 8} rx="4.5" fill="url(#sqRubber)" />
+      {/* screw dots */}
+      <circle cx="32" cy={70} r="2.6" fill="#0a100d" opacity="0.5" />
+      <circle cx="32" cy={50 + bladeH - 18} r="2.6" fill="#0a100d" opacity="0.5" />
     </svg>
   );
 }
@@ -342,10 +375,10 @@ export function Loader({ onDone }: { onDone: () => void }) {
         </div>
       </div>
 
-      {/* the little wiper — sized to the third it's cleaning */}
+      {/* the little wiper — sized to the third it's cleaning, leaning into the stroke */}
       <div className="absolute" style={{ left: `${wx * 100}%`, top: `${wy * 100}%`, transform: "translate(-50%, -50%)" }}>
         <MiniSqueegee
-          flip={dir < 0}
+          tilt={dir * 14}
           height={typeof window !== "undefined" ? window.innerHeight / 3 : 240}
         />
       </div>
