@@ -231,32 +231,31 @@ export function Squeegee({ className = "" }: { className?: string }) {
   );
 }
 
-/* ---------- tall wiper blade for the loader ---------- */
-function LoaderWiper() {
+
+/* ---------- small handheld squeegee (vertical, like the reference) ---------- */
+function MiniSqueegee({ flip = false }: { flip?: boolean }) {
   return (
-    <svg viewBox="0 0 90 620" className="h-[105vh] w-auto drop-shadow-[0_10px_25px_rgba(22,36,29,0.35)]" aria-hidden>
-      {/* handle */}
-      <rect x="37" y="6" width="16" height="130" rx="8" fill="#16241D" />
-      <rect x="37" y="6" width="16" height="130" rx="8" fill="#fff" opacity="0.12" />
-      {/* blade channel */}
-      <rect x="18" y="136" width="54" height="470" rx="10" fill="#FFC82E" />
-      <rect x="18" y="136" width="54" height="470" rx="10" fill="#fff" opacity="0.2" />
-      {/* rubber edge (leading) */}
-      <rect x="18" y="136" width="10" height="470" rx="5" fill="#16241D" />
-      {/* water droplets flung off */}
-      <g fill="#9fd8ff" opacity="0.9">
-        <circle cx="8" cy="220" r="5" />
-        <circle cx="4" cy="330" r="3.5" />
-        <circle cx="9" cy="450" r="4.5" />
-        <circle cx="5" cy="540" r="3" />
-      </g>
+    <svg
+      viewBox="0 0 64 150"
+      className="h-28 w-auto drop-shadow-[0_10px_20px_rgba(22,36,29,0.35)]"
+      style={{ transform: `scaleX(${flip ? -1 : 1})`, transition: "transform 0.25s" }}
+      aria-hidden
+    >
+      <rect x="22" y="4" width="20" height="46" rx="10" fill="#16241D" />
+      <rect x="22" y="4" width="20" height="46" rx="10" fill="#fff" opacity="0.12" />
+      <rect x="14" y="50" width="36" height="92" rx="9" fill="#FFC82E" />
+      <rect x="14" y="50" width="36" height="92" rx="9" fill="#fff" opacity="0.18" />
+      <rect x="14" y="50" width="9" height="92" rx="4.5" fill="#16241D" />
     </svg>
   );
 }
 
-/* ---------- loading screen: wiper cleans the screen ---------- */
+const GRIME =
+  "radial-gradient(ellipse 35% 30% at 18% 30%, rgba(90,75,50,0.35), transparent), radial-gradient(ellipse 30% 26% at 78% 60%, rgba(90,75,50,0.32), transparent), radial-gradient(ellipse 22% 20% at 55% 85%, rgba(90,75,50,0.3), transparent)";
+
+/* ---------- loading screen: small squeegee wipes 3 bands ---------- */
 export function Loader({ onDone }: { onDone: () => void }) {
-  const [progress, setProgress] = useState(0);
+  const [p, setP] = useState(0);
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
@@ -266,21 +265,19 @@ export function Loader({ onDone }: { onDone: () => void }) {
     }
     document.body.style.overflow = "hidden";
     const t0 = performance.now();
-    const dur = 2000;
+    const dur = 2500;
     let raf = 0;
     const tick = (t: number) => {
-      const raw = Math.min(1, (t - t0) / dur);
-      // easeInOut: steady wipe
-      const p = raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2;
-      setProgress(p);
-      if (raw < 1) {
+      const r = Math.min(1, (t - t0) / dur);
+      setP(r);
+      if (r < 1) {
         raf = requestAnimationFrame(tick);
       } else {
         setFading(true);
         setTimeout(() => {
           document.body.style.overflow = "";
           onDone();
-        }, 450);
+        }, 400);
       }
     };
     raf = requestAnimationFrame(tick);
@@ -290,39 +287,62 @@ export function Loader({ onDone }: { onDone: () => void }) {
     };
   }, [onDone]);
 
-  const pct = progress * 100;
+  // wiper path: L→R (top 30%) → down → R→L (middle 30%) → down → L→R (bottom 40%)
+  const segs: Array<[number, number, number, number, number, number]> = [
+    [0.0, 0.3, 0.03, 0.15, 0.97, 0.15],
+    [0.3, 0.36, 0.97, 0.15, 0.97, 0.45],
+    [0.36, 0.62, 0.97, 0.45, 0.03, 0.45],
+    [0.62, 0.68, 0.03, 0.45, 0.03, 0.8],
+    [0.68, 1.0, 0.03, 0.8, 0.97, 0.8],
+  ];
+  let wx = 0.03;
+  let wy = 0.15;
+  let dir = 1;
+  for (const [a, b, x0, y0, x1, y1] of segs) {
+    if (p <= b) {
+      const q = Math.min(1, Math.max(0, (p - a) / (b - a)));
+      wx = x0 + (x1 - x0) * q;
+      wy = y0 + (y1 - y0) * q;
+      dir = x1 < x0 ? -1 : 1;
+      break;
+    }
+  }
+
+  const q1 = Math.min(1, p / 0.3);
+  const q2 = Math.min(1, Math.max(0, (p - 0.36) / 0.26));
+  const q3 = Math.min(1, Math.max(0, (p - 0.68) / 0.32));
+  const fog = "bg-[#ddd6c2]/95 backdrop-blur-[7px]";
 
   return (
     <div
       className={`fixed inset-0 z-[100] transition-opacity duration-500 ${fading ? "pointer-events-none opacity-0" : ""}`}
       aria-hidden
     >
-      {/* dirty fog layer — gets wiped away left → right */}
-      <div
-        className="absolute inset-0 bg-[#ddd6c2]/95 backdrop-blur-[7px]"
-        style={{ clipPath: `inset(0 0 0 ${pct}%)` }}
-      >
-        {/* grime smudges */}
-        <div className="absolute inset-0 opacity-70" style={{ background: "radial-gradient(ellipse 35% 28% at 18% 22%, rgba(90,75,50,0.35), transparent), radial-gradient(ellipse 30% 24% at 78% 66%, rgba(90,75,50,0.32), transparent), radial-gradient(ellipse 22% 18% at 55% 88%, rgba(90,75,50,0.3), transparent), radial-gradient(ellipse 26% 20% at 88% 18%, rgba(90,75,50,0.28), transparent)" }} />
-        {/* brand mark, wiped off with the grime */}
-        <div className="absolute inset-0 grid place-items-center">
-          <div className="text-center">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-sun font-display text-3xl text-ink shadow-lg">S</div>
-            <div className="mt-3 font-display text-2xl tracking-wide text-ink uppercase">Spotless</div>
-            <div className="mt-1 text-xs font-semibold tracking-[0.3em] text-ink/50 uppercase">wiping…</div>
-          </div>
+      {/* band 1: top 30% — wiped left → right */}
+      <div className={`absolute inset-x-0 top-0 h-[30%] ${fog}`} style={{ clipPath: `inset(0 0 0 ${q1 * 100}%)` }}>
+        <div className="absolute inset-0 opacity-70" style={{ background: GRIME }} />
+      </div>
+      {/* band 2: middle 30% — wiped right → left */}
+      <div className={`absolute inset-x-0 top-[30%] h-[30%] ${fog}`} style={{ clipPath: `inset(0 ${q2 * 100}% 0 0)` }}>
+        <div className="absolute inset-0 opacity-70" style={{ background: GRIME }} />
+      </div>
+      {/* band 3: bottom 40% — wiped left → right */}
+      <div className={`absolute inset-x-0 top-[60%] h-[40%] ${fog}`} style={{ clipPath: `inset(0 0 0 ${q3 * 100}%)` }}>
+        <div className="absolute inset-0 opacity-70" style={{ background: GRIME }} />
+      </div>
+
+      {/* brand mark, fades as the wipe progresses */}
+      <div className="absolute inset-0 grid place-items-center" style={{ opacity: Math.max(0, 1 - p * 1.4) }}>
+        <div className="text-center">
+          <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-sun font-display text-3xl text-ink shadow-lg">S</div>
+          <div className="mt-3 font-display text-2xl tracking-wide text-ink uppercase">Spotless</div>
+          <div className="mt-1 text-xs font-semibold tracking-[0.3em] text-ink/50 uppercase">wiping…</div>
         </div>
       </div>
 
-      {/* gleam trail just behind the wiper */}
-      <div
-        className="absolute inset-y-0 w-24 bg-gradient-to-r from-transparent via-white/50 to-transparent"
-        style={{ left: `calc(${pct}% - 7rem)` }}
-      />
-
-      {/* the wiper itself */}
-      <div className="absolute inset-y-0" style={{ left: `calc(${pct}% - 45px)` }}>
-        <LoaderWiper />
+      {/* the little wiper */}
+      <div className="absolute" style={{ left: `${wx * 100}%`, top: `${wy * 100}%`, transform: "translate(-50%, -50%)" }}>
+        <MiniSqueegee flip={dir < 0} />
       </div>
     </div>
   );
